@@ -11,6 +11,8 @@ import time
 import csv
 import re
 from csv import writer
+from csv import DictReader
+import random
 # Custom Logging
 import logging
 from webdriver_manager.core.logger import set_logger
@@ -41,24 +43,73 @@ chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.page_load_strategy = 'normal'
 # chrome_options.binary_location = "/usr/bin/google-chrome-stable"
 
-print('Enter keyword: ')
-keyword = input()
-
-# url = f"https://www.upwork.com/nx/jobs/search/?q={keyword}&sort=recency" # without Login
-url = f"https://www.upwork.com/nx/jobs/search/?q={keyword}&sort=recency" # with login
-
 driver = webdriver.Chrome(options=chrome_options)
 
-driver.get(url)
-driver.add_cookie({"name":"cookie_domain", "value": ".upwork.com"})
-driver.add_cookie({"name":"lang", "value": "en"})
-driver.add_cookie({"name":"IR_gbd", "value": "upwork.com"})
-time.sleep(30)
+# Authenticate Upwork
+def keyboard_dummyClick(element, word, delay):
+    for c in word:
+        element.send_keys(c)
+        time.sleep(random.uniform(0.2, delay))
+    
+def authenticate(email, password):
+    url = f"https://www.upwork.com/ab/account-security/login"
+    driver.get(url)
+    driver.add_cookie({"name":"cookie_domain", "value": ".upwork.com"})
+    driver.add_cookie({"name":"lang", "value": "en"})
+    driver.add_cookie({"name":"IR_gbd", "value": "upwork.com"})
+    time.sleep(10)
+    
+    username = driver.find_element(By.ID, "login_username")
+    continueWithEmailBtn = driver.find_element(By.ID, "login_password_continue")
+    keyboard_dummyClick(username, email, 0.6)
+    continueWithEmailBtn.click()
+    time.sleep(3)
+    
+    passwordInput = driver.find_element(By.ID, "login_password")
+    loginBtn = driver.find_element(By.ID, "login_control_continue")
+    keyboard_dummyClick(passwordInput, password, 0.5)
+    loginBtn.click()
+    time.sleep(3)
 
-## Check if the Upwork website is reached out
-logger.info(driver.title)
+def upwork_login():
+    with open('./UpworkCredentials.csv', newline='') as fd:
+        csv_reader = DictReader(fd)
+        for row in csv_reader:
+            authenticate(row['Email'], row['Password'])
+    return True
 
+# Scrape the latest jobs and save to UpworkJobs.csv
 def jobs_crawler():
+    ### Get the User input for filtering options ###
+    print('Enter keyword to search: ')
+    keyword = input()
+    print()
+
+    print('Find payment verified jobs?:(y or n) ')
+    verified = input()
+    print()
+    if verified == 'y' or verified == 'Y' or verified == 'yes':
+        payment_verified = '&payment_verified=1'
+    else:
+        payment_verified = ''
+
+    print('Filter by location:(e.g United States,United Kingdom) ')
+    location = input()
+    print()
+    if len(location):
+        location = f'&location={location}'
+    #################################################
+
+    # url = f"https://www.upwork.com/nx/jobs/search/?q={keyword}&sort=recency" # without Login
+    url = f"https://www.upwork.com/nx/jobs/search/?q={keyword}&sort=recency{payment_verified}{location}" # with login
+    driver.get(url)
+    driver.add_cookie({"name":"cookie_domain", "value": ".upwork.com"})
+    driver.add_cookie({"name":"lang", "value": "en"})
+    driver.add_cookie({"name":"IR_gbd", "value": "upwork.com"})
+    time.sleep(30)
+
+    ## Check if the Upwork website is reached out
+    logger.info(driver.title)
     counter = 0
     #open document and start writing process
     with open('./UpworkJobs.csv','w', encoding="utf-8", newline='') as fd:
@@ -79,8 +130,7 @@ def jobs_crawler():
                     'Description'
                     ])
     
-        # while True:
-        logger.info("Page reading...")
+        # while True:  # This will be used when we need to navigate to next pages
         # wait content to be loaded
         WebDriverWait(driver, 30).until(EC.visibility_of_element_located((By.CSS_SELECTOR, "h3[class='my-0 p-sm-right job-tile-title'] > a")))
 
@@ -129,3 +179,20 @@ def jobs_crawler():
 
 #         if (counter == 2):
 #             break
+    return True
+
+# Bid for the project
+def bid_project():
+    time.sleep(10)
+    with open('./UpworkJobs.csv', newline='') as fd:
+        csv_reader = DictReader(fd)
+        for row in csv_reader:
+            logger.info(row)
+            
+def get_recommended_by_AI_project(jobs_file_content):
+    projects = []
+    return projects
+
+def get_recommended_by_AI_bid(bid_file_content):
+    bid = ''
+    return bid
