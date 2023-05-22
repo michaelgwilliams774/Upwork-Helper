@@ -7,12 +7,15 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
+from inputimeout import inputimeout, TimeoutOccurred
 import time
 import csv
 import re
 from csv import writer
 from csv import DictReader
 import random
+# import pandas as pd
+# import xlrd
 # Custom Logging
 import logging
 from webdriver_manager.core.logger import set_logger
@@ -31,7 +34,7 @@ set_logger(logger)
 ## Set Chrome Driver Options ##
 
 chrome_options = Options()
-chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222") #Important for open chromebrowser
 # chrome_options.add_argument("--incognito")
 chrome_options.add_argument('--ignore-ssl-errors=yes')
 chrome_options.add_argument('--ignore-certificate-errors')
@@ -49,9 +52,9 @@ driver = webdriver.Chrome(options=chrome_options)
 def keyboard_dummyClick(element, word, delay):
     for c in word:
         element.send_keys(c)
-        time.sleep(random.uniform(0.2, delay))
+        time.sleep(random.uniform(0.1, delay))
     
-def authenticate(email, password):
+def authenticate(email, password, sec_answer):
     url = f"https://www.upwork.com/ab/account-security/login"
     driver.get(url)
     driver.add_cookie({"name":"cookie_domain", "value": ".upwork.com"})
@@ -61,21 +64,29 @@ def authenticate(email, password):
     
     username = driver.find_element(By.ID, "login_username")
     continueWithEmailBtn = driver.find_element(By.ID, "login_password_continue")
-    keyboard_dummyClick(username, email, 0.6)
+    keyboard_dummyClick(username, email, 0.3)
     continueWithEmailBtn.click()
     time.sleep(3)
     
     passwordInput = driver.find_element(By.ID, "login_password")
     loginBtn = driver.find_element(By.ID, "login_control_continue")
-    keyboard_dummyClick(passwordInput, password, 0.5)
+    keyboard_dummyClick(passwordInput, password, 0.2)
     loginBtn.click()
-    time.sleep(3)
+    time.sleep(10)
+    
+    # If it goes to the security answer page:
+    if check_exists_by_id("login_answer"):
+        securityAnswerInput = driver.find_element(By.ID, "login_answer")
+        continueBtn = driver.find_element(By.ID, "login_control_continue")
+        keyboard_dummyClick(securityAnswerInput, sec_answer, 0.2)
+        continueBtn.click()
+        time.sleep(3)
 
 def upwork_login():
     with open('./UpworkCredentials.csv', newline='') as fd:
         csv_reader = DictReader(fd)
         for row in csv_reader:
-            authenticate(row['Email'], row['Password'])
+            authenticate(row['Email'], row['Password'], row['Security_Answer'])
     return True
 
 # Scrape the latest jobs and save to UpworkJobs.csv
@@ -84,7 +95,7 @@ def jobs_crawler():
     print('Enter keyword to search: ')
     keyword = input()
     print()
-
+    
     print('Find payment verified jobs?:(y or n) ')
     verified = input()
     print()
@@ -92,13 +103,13 @@ def jobs_crawler():
         payment_verified = '&payment_verified=1'
     else:
         payment_verified = ''
-
+    
     print('Filter by location:(e.g United States,United Kingdom) ')
     location = input()
     print()
     if len(location):
         location = f'&location={location}'
-    #################################################
+   #################################################
 
     # url = f"https://www.upwork.com/nx/jobs/search/?q={keyword}&sort=recency" # without Login
     url = f"https://www.upwork.com/nx/jobs/search/?q={keyword}&sort=recency{payment_verified}{location}" # with login
@@ -109,7 +120,7 @@ def jobs_crawler():
     time.sleep(30)
 
     ## Check if the Upwork website is reached out
-    logger.info(driver.title)
+    # logger.info(driver.title)
     counter = 0
     #open document and start writing process
     with open('./UpworkJobs.csv','w', encoding="utf-8", newline='') as fd:
@@ -179,20 +190,203 @@ def jobs_crawler():
 
 #         if (counter == 2):
 #             break
+    print("Successfully got the job list")
+    logger.info("Successfully got the job list")
     return True
 
 # Bid for the project
 def bid_project():
     time.sleep(10)
+    projects = []
+    temp = []
     with open('./UpworkJobs.csv', newline='') as fd:
         csv_reader = DictReader(fd)
         for row in csv_reader:
-            logger.info(row)
-            
-def get_recommended_by_AI_project(jobs_file_content):
-    projects = []
-    return projects
+            temp.append(row)
+        
+    _make_bid_on_projects(temp)
+    
+    # logger.info('projects - ', len(projects))
 
-def get_recommended_by_AI_bid(bid_file_content):
-    bid = ''
-    return bid
+            
+def _make_bid_on_projects(jobs_file_content):
+    ### Read jobs file and return the filtered projects ###
+    projects = []
+    for row in jobs_file_content:
+        spent = row['Spent'].split('$').pop()     
+        if 'K+' in spent:
+            spent = spent.replace('K+', '000')
+        elif 'M+' in spent:
+            spent = spent.replace('M+', '000000')
+        
+        row['Spent'] = int(spent)
+        
+        if row['Job Type'] == 'Fixed-price':
+            projects.append(row)
+            projects[-1]['Type'] = 'fixed'
+            projects[-1]['Budget'] = int(row['Fixed Salary'].split('$').pop().replace(',', ''))
+        
+        elif "Hourly" in row['Job Type']:
+            projects.append(row)
+            projects[-1]['Type'] = 'hourly'
+            if len(row['Fixed Salary'].split(':')) > 1:
+                projects[-1]['Budget'] = int(row['Fixed Salary'].split(':').pop(1).split('$').pop().replace(',', ''))
+            else:
+                projects[-1]['Budget'] = 0
+    
+    filtered_projects = filter_by_AI_projects(projects)
+    
+    # bid for projects
+    for item in filtered_projects:
+        if _bid_for_project(item):
+            continue
+        else:
+            print("Error in bid for fixed project")
+            logger.info("Error occurred in bidding for fixed project")
+            break
+        driver.get_screenshot_as_file("screenshot_bid_project.png")
+
+def filter_by_AI_bid(project):
+    # open workbook
+    # wb = xlrd.open_workbook(r'.\UpworkBids.xlsx')
+    # # open first sheet
+    # sheet = wb.sheet_by_index(0)
+    with open('./UpworkBids.csv', newline='') as fd:
+        csv_reader = DictReader(fd, delimiter=';')
+        bids = []
+        for row in csv_reader:
+            print(row)
+            bids.append({
+                "Bid_content": row['Bid_content']
+            })
+            tag = row['Tag']
+            bid = row['Bid_content']
+            project_description = project['Description']
+            # clean string
+            pat = re.compile(r'[^a-zA-Z ]+')
+            tag = re.sub(pat, '', tag).lower()
+            project_description = re.sub(pat, '', project_description).lower()
+            
+            # split string
+            splits = project_description.split()
+            
+            result = {}
+            for x in tag.split():
+                result[x] = 0
+                for y in project_description.split():
+                    if x == y:
+                        result[x] += 1
+            bids[-1]['Match_case'] = sum(result.values()) / len(result.values())
+        
+        return (sorted(bids, key = lambda x: x['Match_case'], reverse = True))[0]['Bid_content'].replace('. ', '.\n')
+
+def filter_by_AI_projects(projects):
+    ### Temporary emulation of AI ###
+    ### We will add real AI feature in this subroutine later ###
+    # logger.info('projects type - ', type(projects))
+    filtered_by_budget = sorted(projects, key = lambda x: x['Budget'], reverse = True)[:5]
+    filtered_by_spent = sorted(projects, key = lambda x: x['Spent'], reverse = True)[:5]
+    for item in filtered_by_spent:
+        if item not in filtered_by_budget:
+            filtered_by_budget.append(item)
+    return filtered_by_budget
+
+def _bid_for_hourly_project(project):
+    ### Make bid for hourly project###
+    return
+    
+def _bid_for_project(project):
+    ### Make bid for fixed project ###
+    driver.get(project['Job link'])
+    time.sleep(5)
+    try:
+        applyNowBtn = driver.find_element(By.CSS_SELECTOR, "button[aria-label='Apply Now']")
+        try:
+            disabled = applyNowBtn.get_attribute("disabled")
+            if disabled:
+                print('Apply Now button is disabled')
+                return True
+            else:
+                print('Apply Now button is enabled')
+                applyNowBtn.click()
+        except:
+            return True
+    except NoSuchElementException:
+        return True
+    
+    # After clicking "Apply Now" button, it will be redirected to new page - apply page
+    # So we need to wait
+    time.sleep(10)
+    # WebDriverWait(driver, 15).until(EC.visibility_of_element_located((By.CSS_SELECTOR, "div[class='up-modal-dialog']")))
+    # When make bid for the first time after creating the account,
+    # you may get "Use connects to submit proposals" dialog
+    print(check_exists_by_css("div[class='up-modal-dialog']"))
+    if check_exists_by_css("div[class='up-modal-dialog']"):
+        modalDialog = driver.find_element(By.CSS_SELECTOR, "div[class='up-modal-dialog']")
+        try:
+            if modalDialog.find_element(By.CSS_SELECTOR, "h2[class='text-center']").text == "Use Connects to submit proposals":
+                closeBtn = driver.find_element(By.CSS_SELECTOR, "div[class='up-modal-footer'] > div > div > button")
+                closeBtn.click()
+        except NoSuchElementException:
+            return False
+    
+    driver.implicitly_wait(15)
+    if check_exists_by_css("input[name='milestoneMode'][value='default']"): # This will be only for fixed projects
+        # Handle milestone mode
+        milestoneRadioBtn = driver.find_element(By.CSS_SELECTOR, "input[name='milestoneMode'][value='default']")
+        driver.execute_script("arguments[0].click();", milestoneRadioBtn) # Javascript Executor - radio button often has "ElementClickInterceptedException"
+        # milestoneRadioBtn[1].click()
+
+        durationDropDown = driver.find_element(By.CSS_SELECTOR, "div[aria-describedby='duration-error']")
+        durationDropDown.click()
+        time.sleep(5)
+        dropdownOptions = driver.find_elements(By.CSS_SELECTOR, "ul[aria-labelledby='duration-label'] > li")
+        dropdownOptions[-1].click() # select "less than one month"
+    
+    # Cover Letter Area
+    coverLetterTextArea = driver.find_element(By.CSS_SELECTOR, "textarea[aria-labelledby='cover_letter_label']")
+    bidText = filter_by_AI_bid(project)
+    coverLetterTextArea.send_keys(bidText)
+    # Questions Area
+    if check_exists_by_css("div[class='fe-proposal-job-questions questions-area'] > div[class='form-group up-form-group'] > div > textarea[class='up-textarea']"):
+        questionsAreas = driver.find_elements(By.CSS_SELECTOR, "div[class='fe-proposal-job-questions questions-area'] > div[class='form-group up-form-group'] > div > textarea[class='up-textarea']")
+        for questionEl in questionAreas:
+            questionEl.send_keys("Let's jump on a quick call to discuss further details")
+    
+    # Send for 8/6/4 default connects
+    sendBtn = driver.find_element(By.CSS_SELECTOR, "footer[class*='pb-10 mt-20'] > div > button")
+    sendBtn.click()
+    
+    # Understand Upwork TOS or Escrow Modal
+    print(check_exists_by_css("div[class='up-modal-dialog']"))
+    if check_exists_by_css("div[class='up-modal-dialog']"):
+        modalDialog = driver.find_element(By.CSS_SELECTOR, "div[class='up-modal-dialog']")
+        try:
+            # if modalDialog.find_element(By.CSS_SELECTOR, "h2[class='up-modal-title']").text.strip() == "Stay safe & build your reputation":
+            agreeCheckBox = modalDialog.find_element(By.CSS_SELECTOR, "input[name='checkbox']")
+            driver.execute_script("arguments[0].click();", agreeCheckBox)
+            time.sleep(2)
+            submitBtn = modalDialog.find_element(By.CSS_SELECTOR, "div[class='up-modal-footer'] > div > button[class='up-btn up-btn-primary m-0 btn-primary']")
+            submitBtn.click()
+            time.sleep(3)
+            return True
+        except NoSuchElementException:
+            print("Error in agreeing TOS")
+            return False
+    
+    return False
+
+# Utilities
+def check_exists_by_id(element_id):
+    try:
+        temp = driver.find_element(By.ID, element_id)
+    except NoSuchElementException:
+        return False
+    return True
+
+def check_exists_by_css(element_class):
+    try:
+        temp = driver.find_element(By.CSS_SELECTOR, element_class)
+    except NoSuchElementException:
+        return False
+    return True
