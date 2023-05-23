@@ -34,21 +34,20 @@ set_logger(logger)
 ## Set Chrome Driver Options ##
 
 chrome_options = Options()
-# chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222") #Important for open chromebrowser
+# chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222") #Important for open chromebrowser when running on local
 # chrome_options.add_argument("--incognito")
+chrome_options.add_argument('--window-size=1920,1080')
 chrome_options.add_argument('--ignore-ssl-errors=yes')
 chrome_options.add_argument('--ignore-certificate-errors')
 chrome_options.add_argument('--allow-running-insecure-content')
-chrome_options.add_argument("--window-size=1920,1080")
-# chrome_options.add_argument('--user-data-dir=C:/Users/Acer/AppData/Local/Google/Chrome/User Data')
-# chrome_options.add_argument('--profile-directory=Profile 1'),
+user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36'
+chrome_options.add_argument(f'user-agent={user_agent}')
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--headless") # This won't show the window
+chrome_options.headless = True
 chrome_options.page_load_strategy = 'normal'
-user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36'
-chrome_options.add_argument(f'user-agent={user_agent}')
-chrome_options.binary_location = "/usr/bin/chromium"
+# chrome_options.binary_location = "/usr/bin/google-chrome-stable"
 
 driver = webdriver.Chrome(options=chrome_options)
 
@@ -61,6 +60,7 @@ def keyboard_dummyClick(element, word, delay):
 def authenticate(email, password, sec_answer):
     url = f"https://www.upwork.com/ab/account-security/login"
     driver.get(url)
+    driver.get_screenshot_as_file("screenshot_login.png")
     driver.add_cookie({"name":"cookie_domain", "value": ".upwork.com"})
     driver.add_cookie({"name":"lang", "value": "en"})
     driver.add_cookie({"name":"IR_gbd", "value": "upwork.com"})
@@ -85,16 +85,13 @@ def authenticate(email, password, sec_answer):
         keyboard_dummyClick(securityAnswerInput, sec_answer, 0.2)
         continueBtn.click()
         time.sleep(3)
-    return True
+    jobs_crawler()
 
 def upwork_login():
     with open('./UpworkCredentials.csv', newline='') as fd:
         csv_reader = DictReader(fd)
         for row in csv_reader:
-            if authenticate(row['Email'], row['Password'], row['Security_Answer']):
-                print(f"login successfully - {row['Email']}")
-                jobs_crawler()
-    return True
+            authenticate(row['Email'], row['Password'], row['Security_Answer'])
 
 # Scrape the latest jobs and save to UpworkJobs.csv
 def jobs_crawler():
@@ -200,7 +197,6 @@ def jobs_crawler():
     print("Successfully got the job list")
     logger.info("Successfully got the job list")
     bid_project()
-    return True
 
 # Bid for the project
 def bid_project():
@@ -212,8 +208,8 @@ def bid_project():
         for row in csv_reader:
             temp.append(row)
         
-    bid_status = _make_bid_on_projects(temp)
-    return bid_status
+    _make_bid_on_projects(temp)
+    
     # logger.info('projects - ', len(projects))
 
             
@@ -252,10 +248,8 @@ def _make_bid_on_projects(jobs_file_content):
             print("Error in bid for fixed project")
             logger.info("Error occurred in bidding for fixed project")
             break
-        driver.get_screenshot_as_file("screenshot_bid_project.png")
     log_out()
-    return True
-        
+
 def filter_by_AI_bid(project):
     # open workbook
     # wb = xlrd.open_workbook(r'.\UpworkBids.xlsx')
@@ -301,10 +295,6 @@ def filter_by_AI_projects(projects):
             filtered_by_budget.append(item)
     return filtered_by_budget
 
-def _bid_for_hourly_project(project):
-    ### Make bid for hourly project###
-    return
-    
 def _bid_for_project(project):
     ### Make bid for fixed project ###
     driver.get(project['Job link'])
