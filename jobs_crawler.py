@@ -85,6 +85,7 @@ def authenticate(email, password, sec_answer):
         keyboard_dummyClick(securityAnswerInput, sec_answer, 0.2)
         continueBtn.click()
         time.sleep(3)
+    return True
 
 def upwork_login():
     with open('./UpworkCredentials.csv', newline='') as fd:
