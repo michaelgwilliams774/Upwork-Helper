@@ -52,6 +52,12 @@ apt-get install chromium chromium-driver
 !pip install -U selenium
 !pip install -U webdriver-manager
 
+
+// We changed to use firefox, instead of chrome on google-colab-research,
+// because chrome arises TimoutException continuously. 
+// No solution at the moment.
+
+
 ** Daemonize JupyterLab
 https://www.vultr.com/docs/how-to-set-up-a-jupyterlab-environment-on-ubuntu-22-04/
 

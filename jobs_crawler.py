@@ -282,7 +282,6 @@ def filter_by_AI_bid(project):
         csv_reader = DictReader(fd, delimiter=';')
         bids = []
         for row in csv_reader:
-            print(row)
             bids.append({
                 "Bid_content": row['Bid_content']
             })
@@ -316,11 +315,12 @@ def filter_by_AI_projects(projects):
     for item in filtered_by_spent:
         if item not in filtered_by_budget:
             filtered_by_budget.append(item)
-    return filtered_by_budget
+    return filtered_by_budget[:5]
 
 def _bid_for_project(project):
     ### Make bid for fixed project ###
     driver.get(project['Job link'])
+    print(project['Job Title'])
     time.sleep(5)
     driver.get_screenshot_as_file('job_apply.png')
     try:
@@ -344,7 +344,6 @@ def _bid_for_project(project):
     # WebDriverWait(driver, 15).until(EC.visibility_of_element_located((By.CSS_SELECTOR, "div[class='up-modal-dialog']")))
     # When make bid for the first time after creating the account,
     # you may get "Use connects to submit proposals" dialog
-    print(check_exists_by_css("div[class='up-modal-dialog']"))
     if check_exists_by_css("div[class='up-modal-dialog']"):
         modalDialog = driver.find_element(By.CSS_SELECTOR, "div[class='up-modal-dialog']")
         try:
@@ -370,6 +369,7 @@ def _bid_for_project(project):
     # Cover Letter Area
     coverLetterTextArea = driver.find_element(By.CSS_SELECTOR, "textarea[aria-labelledby='cover_letter_label']")
     bidText = filter_by_AI_bid(project)
+    print('bid - ', bidText)
     coverLetterTextArea.send_keys(bidText)
     # Questions Area
     if check_exists_by_css("div[class='fe-proposal-job-questions questions-area'] > div[class='form-group up-form-group'] > div > textarea[class='up-textarea']"):
@@ -382,7 +382,6 @@ def _bid_for_project(project):
     sendBtn.click()
     
     # Understand Upwork TOS or Escrow Modal
-    print(check_exists_by_css("div[class='up-modal-dialog']"))
     if check_exists_by_css("div[class='up-modal-dialog']"):
         modalDialog = driver.find_element(By.CSS_SELECTOR, "div[class='up-modal-dialog']")
         try:
