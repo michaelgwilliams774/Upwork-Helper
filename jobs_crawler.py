@@ -67,6 +67,7 @@ def keyboard_dummyClick(element, word, delay):
         time.sleep(random.uniform(0.1, delay))
     
 def authenticate(email, password, sec_answer):
+    print('authentincating... ', email)
     url = f"https://www.upwork.com/ab/account-security/login"
     driver.get(url)
     driver.get_screenshot_as_file("screenshot_login.png")
@@ -108,6 +109,7 @@ def authenticate(email, password, sec_answer):
         continueBtn.click()
         time.sleep(3)
         driver.get_screenshot_as_file("screenshot_login_answer.png")
+    print("------login successfully: ",email)
     jobs_crawler()
 
 def upwork_login():
@@ -119,27 +121,31 @@ def upwork_login():
 # Scrape the latest jobs and save to UpworkJobs.csv
 def jobs_crawler():
     ### Get the User input for filtering options ###
-    print('Enter keyword to search: ')
-    keyword = input()
-    print()
+    # print('Enter keyword to search: ')
+    # keyword = input()
+    # print()
     
-    print('Find payment verified jobs?:(y or n) ')
-    verified = input()
-    print()
-    if verified == 'y' or verified == 'Y' or verified == 'yes':
-        payment_verified = '&payment_verified=1'
-    else:
-        payment_verified = ''
+    # print('Find payment verified jobs?:(y or n) ')
+    # verified = input()
+    # print()
+    # if verified == 'y' or verified == 'Y' or verified == 'yes':
+    #     payment_verified = '&payment_verified=1'
+    # else:
+    #     payment_verified = ''
     
-    print('Filter by location:(e.g United States,United Kingdom) ')
-    location = input()
-    print()
-    if len(location):
-        location = f'&location={location}'
+    # print('Filter by location:(e.g United States,United Kingdom) ')
+    # location = input()
+    # print()
+    # if len(location):
+    #     location = f'&location={location}'
    #################################################
 
+    keyword='web'
+    payment_verified = '&payment_verified=1'
+    location='&location=United States,Canada,Australia'
+
     # url = f"https://www.upwork.com/nx/jobs/search/?q={keyword}&sort=recency" # without Login
-    url = f"https://www.upwork.com/nx/jobs/search/?q={keyword}&sort=recency{payment_verified}{location}" # with login
+    url = f"https://www.upwork.com/nx/jobs/search/?q={keyword}&sort=recency{payment_verified}{location}&t=0,1&amount=1000-&hourly_rate=30-" # with login
     driver.get(url)
     driver.add_cookie({"name":"cookie_domain", "value": ".upwork.com"})
     driver.add_cookie({"name":"lang", "value": "en"})
@@ -240,11 +246,16 @@ def _make_bid_on_projects(jobs_file_content):
     ### Read jobs file and return the filtered projects ###
     projects = []
     for row in jobs_file_content:
-        spent = row['Spent'].split('$').pop()     
-        if 'K+' in spent:
-            spent = spent.replace('K+', '000')
-        elif 'M+' in spent:
-            spent = spent.replace('M+', '000000')
+        if row['Spent'] == '':
+            spent = 0
+        else:
+            spent = row['Spent'].split('$').pop()     
+            if 'K+' in spent:
+                spent = spent.replace('K+', '000')
+            elif 'K' in spent:
+                spent = spent.replace('K', '000')
+            elif 'M+' in spent:
+                spent = spent.replace('M+', '000000')
         
         row['Spent'] = int(spent)
         
@@ -257,9 +268,9 @@ def _make_bid_on_projects(jobs_file_content):
             projects.append(row)
             projects[-1]['Type'] = 'hourly'
             if len(row['Fixed Salary'].split(':')) > 1:
-                projects[-1]['Budget'] = int(row['Fixed Salary'].split(':').pop(1).split('$').pop().replace(',', ''))
+                projects[-1]['Budget'] = int(row['Fixed Salary'].split(':').pop(1).split('$').pop().replace(',', '')) * 40
             else:
-                projects[-1]['Budget'] = 0
+                projects[-1]['Budget'] = 10
     
     filtered_projects = filter_by_AI_projects(projects)
     
@@ -268,8 +279,8 @@ def _make_bid_on_projects(jobs_file_content):
         if _bid_for_project(item):
             continue
         else:
-            print("Error in bid for fixed project")
-            logger.info("Error occurred in bidding for fixed project")
+            print("Error in bid for project")
+            logger.info("Error occurred in bidding for project")
             break
     log_out()
 
@@ -286,21 +297,16 @@ def filter_by_AI_bid(project):
                 "Bid_content": row['Bid_content']
             })
             tag = row['Tag']
-            bid = row['Bid_content']
             project_description = project['Description']
             # clean string
             pat = re.compile(r'[^a-zA-Z ]+')
-            tag = re.sub(pat, '', tag).lower()
+            tag = re.sub(pat, ',', tag).lower()
             project_description = re.sub(pat, '', project_description).lower()
-            
-            # split string
-            splits = project_description.split()
-            
             result = {}
-            for x in tag.split():
+            for x in tag.split(','):
                 result[x] = 0
                 for y in project_description.split():
-                    if x == y:
+                    if x.strip() in y.strip():
                         result[x] += 1
             bids[-1]['Match_case'] = sum(result.values()) / len(result.values())
         
@@ -386,18 +392,22 @@ def _bid_for_project(project):
         modalDialog = driver.find_element(By.CSS_SELECTOR, "div[class='up-modal-dialog']")
         try:
             # if modalDialog.find_element(By.CSS_SELECTOR, "h2[class='up-modal-title']").text.strip() == "Stay safe & build your reputation":
-            agreeCheckBox = modalDialog.find_element(By.CSS_SELECTOR, "input[name='checkbox']")
-            driver.execute_script("arguments[0].click();", agreeCheckBox)
-            time.sleep(2)
-            submitBtn = modalDialog.find_element(By.CSS_SELECTOR, "div[class='up-modal-footer'] > div > button[class='up-btn up-btn-primary m-0 btn-primary']")
-            submitBtn.click()
-            time.sleep(3)
+            if check_exists_by_css("input[name='checkbox']"):
+                print('checkbox in modal when sending proposal')
+                agreeCheckBox = modalDialog.find_element(By.CSS_SELECTOR, "input[name='checkbox']")
+                driver.execute_script("arguments[0].click();", agreeCheckBox)
+                time.sleep(2)
+            if check_exists_by_css("div[class='up-modal-footer'] > div > button[class='up-btn up-btn-primary m-0 btn-primary']"):
+                print('submit button in modal when bidding project')
+                submitBtn = modalDialog.find_element(By.CSS_SELECTOR, "div[class='up-modal-footer'] > div > button[class='up-btn up-btn-primary m-0 btn-primary']")
+                submitBtn.click()
+                time.sleep(3)
             return True
         except NoSuchElementException:
             print("Error in agreeing TOS")
             return False
     
-    return False
+    return True
 
 # Utilities
 def check_exists_by_id(element_id):
@@ -425,6 +435,7 @@ def log_out():
         logoutBtn = driver.find_element(By.CSS_SELECTOR, "button[data-cy='logout-trigger']")
         driver.execute_script("arguments[0].click();", logoutBtn)
         time.sleep(3)
+        print('-----log_out called----')
     except NoSuchElementException:
         return False
     return True
