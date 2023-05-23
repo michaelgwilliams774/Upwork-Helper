@@ -35,16 +35,21 @@ set_logger(logger)
 
 chrome_options = Options()
 # chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222") #Important for open chromebrowser when running on local
-# chrome_options.add_argument("--incognito")
+chrome_options.add_experimental_option("prefs", {"profile.default_content_settings.cookies": 2})
+chrome_options.add_argument('--incognito')
+chrome_options.add_argument('lang=en')
+chrome_options.add_argument('start-maximized')
 chrome_options.add_argument('--window-size=1920,1080')
 chrome_options.add_argument('--ignore-ssl-errors=yes')
 chrome_options.add_argument('--ignore-certificate-errors')
 chrome_options.add_argument('--allow-running-insecure-content')
-user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36'
-chrome_options.add_argument(f'user-agent={user_agent}')
+chrome_options.add_argument('user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36')
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--headless") # This won't show the window
+chrome_options.add_argument('--disable-gpu')
+chrome_options.add_argument('--disable-infobars')
+chrome_options.add_argument('--disable-blink-features=AutomationControlled')
 chrome_options.headless = True
 chrome_options.page_load_strategy = 'normal'
 # chrome_options.binary_location = "/usr/bin/google-chrome-stable"
@@ -70,13 +75,21 @@ def authenticate(email, password, sec_answer):
     continueWithEmailBtn = driver.find_element(By.ID, "login_password_continue")
     keyboard_dummyClick(username, email, 0.3)
     continueWithEmailBtn.click()
-    time.sleep(3)
+    time.sleep(5)
+    driver.get_screenshot_as_file("screenshot_login_username.png")
+
+    # Accept cookies
+    if check_exists_by_id("onetrust-accept-btn-handler"):
+      acceptBtn = driver.find_element(By.ID, "onetrust-accept-btn-handler")
+      acceptBtn.click()
+      time.sleep(2)
     
     passwordInput = driver.find_element(By.ID, "login_password")
     loginBtn = driver.find_element(By.ID, "login_control_continue")
     keyboard_dummyClick(passwordInput, password, 0.2)
     loginBtn.click()
-    time.sleep(10)
+    time.sleep(5)
+    driver.get_screenshot_as_file("screenshot_login_password.png")
     
     # If it goes to the security answer page:
     if check_exists_by_id("login_answer"):
@@ -85,6 +98,7 @@ def authenticate(email, password, sec_answer):
         keyboard_dummyClick(securityAnswerInput, sec_answer, 0.2)
         continueBtn.click()
         time.sleep(3)
+        driver.get_screenshot_as_file("screenshot_login_answer.png")
     jobs_crawler()
 
 def upwork_login():
@@ -148,7 +162,7 @@ def jobs_crawler():
         # while True:  # This will be used when we need to navigate to next pages
         # wait content to be loaded
         # WebDriverWait(driver, 30).until(EC.visibility_of_element_located((By.CSS_SELECTOR, "h3[class='my-0 p-sm-right job-tile-title'] > a")))
-
+        time.sleep(30)
         # detect next button
         # nextButton = driver.find_elements(By.CSS_SELECTOR, "button[class='up-pagination-item up-btn up-btn-link'] > div[class='next-icon up-icon']")
 
@@ -299,6 +313,7 @@ def _bid_for_project(project):
     ### Make bid for fixed project ###
     driver.get(project['Job link'])
     time.sleep(5)
+    driver.get_screenshot_as_file('job_apply.png')
     try:
         applyNowBtn = driver.find_element(By.CSS_SELECTOR, "button[aria-label='Apply Now']")
         try:
@@ -349,7 +364,7 @@ def _bid_for_project(project):
     coverLetterTextArea.send_keys(bidText)
     # Questions Area
     if check_exists_by_css("div[class='fe-proposal-job-questions questions-area'] > div[class='form-group up-form-group'] > div > textarea[class='up-textarea']"):
-        questionsAreas = driver.find_elements(By.CSS_SELECTOR, "div[class='fe-proposal-job-questions questions-area'] > div[class='form-group up-form-group'] > div > textarea[class='up-textarea']")
+        questionAreas = driver.find_elements(By.CSS_SELECTOR, "div[class='fe-proposal-job-questions questions-area'] > div[class='form-group up-form-group'] > div > textarea[class='up-textarea']")
         for questionEl in questionAreas:
             questionEl.send_keys("Let's jump on a quick call to discuss further details")
     
@@ -393,6 +408,7 @@ def check_exists_by_css(element_class):
 
 def log_out():
     try:
+        driver.get_screenshot_as_file('log_out.png')
         avatarBtn = driver.find_element(By.CSS_SELECTOR, "button[data-cy='menu-trigger']")
         avatarBtn.click()
         time.sleep(5)
