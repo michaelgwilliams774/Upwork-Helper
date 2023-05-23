@@ -1,13 +1,8 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.action_chains import ActionChains
+
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import Select
-from inputimeout import inputimeout, TimeoutOccurred
 import time
 import csv
 import re
@@ -33,28 +28,37 @@ set_logger(logger)
 
 ## Set Chrome Driver Options ##
 
-chrome_options = Options()
-# chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222") #Important for open chromebrowser when running on local
-chrome_options.add_experimental_option("prefs", {"profile.default_content_settings.cookies": 2})
-chrome_options.add_argument('--incognito')
-chrome_options.add_argument('lang=en')
-chrome_options.add_argument('start-maximized')
-chrome_options.add_argument('--window-size=1920,1080')
-chrome_options.add_argument('--ignore-ssl-errors=yes')
-chrome_options.add_argument('--ignore-certificate-errors')
-chrome_options.add_argument('--allow-running-insecure-content')
-chrome_options.add_argument('user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36')
-chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument("--disable-dev-shm-usage")
-chrome_options.add_argument("--headless") # This won't show the window
-chrome_options.add_argument('--disable-gpu')
-chrome_options.add_argument('--disable-infobars')
-chrome_options.add_argument('--disable-blink-features=AutomationControlled')
-chrome_options.headless = True
-chrome_options.page_load_strategy = 'normal'
+# chrome_options = Options()
+# # chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222") #Important for open chromebrowser when running on local
+# chrome_options.add_experimental_option("prefs", {"profile.default_content_settings.cookies": 2})
+# chrome_options.add_argument('--incognito')
+# chrome_options.add_argument('lang=en')
+# chrome_options.add_argument('start-maximized')
+# chrome_options.add_argument('--window-size=1920,1080')
+# chrome_options.add_argument('--ignore-ssl-errors=yes')
+# chrome_options.add_argument('--ignore-certificate-errors')
+# chrome_options.add_argument('--allow-running-insecure-content')
+# chrome_options.add_argument('user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36')
+# chrome_options.add_argument("--no-sandbox")
+# chrome_options.add_argument("--disable-dev-shm-usage")
+# chrome_options.add_argument("--headless") # This won't show the window
+# chrome_options.add_argument('--disable-gpu')
+# chrome_options.add_argument('--disable-infobars')
+# chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+# chrome_options.headless = True
+# chrome_options.page_load_strategy = 'normal'
 # chrome_options.binary_location = "/usr/bin/google-chrome-stable"
 
-driver = webdriver.Chrome(options=chrome_options)
+# driver = webdriver.Chrome(options=chrome_options)
+
+## Set Firefox Driver Options ##
+binary = '/usr/bin/firefox'
+options = webdriver.FirefoxOptions()
+options.binary = binary
+options.add_argument('start-maximized')
+options.add_argument('--window-size=1920,1080')
+options.add_argument('--headless')
+driver = webdriver.Firefox(options=options, executable_path='/usr/bin/geckodriver')
 
 # Authenticate Upwork
 def keyboard_dummyClick(element, word, delay):
@@ -75,14 +79,19 @@ def authenticate(email, password, sec_answer):
     continueWithEmailBtn = driver.find_element(By.ID, "login_password_continue")
     keyboard_dummyClick(username, email, 0.3)
     continueWithEmailBtn.click()
+    # Accept cookies
+    if check_exists_by_id("onetrust-accept-btn-handler"):
+      acceptBtn = driver.find_element(By.ID, "onetrust-accept-btn-handler")
+      driver.execute_script("arguments[0].click();", acceptBtn)
+      time.sleep(5)
     time.sleep(5)
     driver.get_screenshot_as_file("screenshot_login_username.png")
 
     # Accept cookies
     if check_exists_by_id("onetrust-accept-btn-handler"):
       acceptBtn = driver.find_element(By.ID, "onetrust-accept-btn-handler")
-      acceptBtn.click()
-      time.sleep(2)
+      driver.execute_script("arguments[0].click();", acceptBtn)
+      time.sleep(5)
     
     passwordInput = driver.find_element(By.ID, "login_password")
     loginBtn = driver.find_element(By.ID, "login_control_continue")
@@ -161,8 +170,8 @@ def jobs_crawler():
     
         # while True:  # This will be used when we need to navigate to next pages
         # wait content to be loaded
-        # WebDriverWait(driver, 30).until(EC.visibility_of_element_located((By.CSS_SELECTOR, "h3[class='my-0 p-sm-right job-tile-title'] > a")))
-        time.sleep(30)
+        WebDriverWait(driver, 30).until(EC.visibility_of_element_located((By.CSS_SELECTOR, "h3[class='my-0 p-sm-right job-tile-title'] > a")))
+        
         # detect next button
         # nextButton = driver.find_elements(By.CSS_SELECTOR, "button[class='up-pagination-item up-btn up-btn-link'] > div[class='next-icon up-icon']")
 
