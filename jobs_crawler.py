@@ -86,7 +86,12 @@ def upwork_login():
     with open('./UpworkCredentials.csv', newline='') as fd:
         csv_reader = DictReader(fd)
         for row in csv_reader:
-            authenticate(row['Email'], row['Password'], row['Security_Answer'])
+            if authenticate(row['Email'], row['Password'], row['Security_Answer']):
+                scraping = jobs_crawler()
+                if scraping:
+                    bid_status = bid_project()
+                    if bid_status:
+                        log_out()
     return True
 
 # Scrape the latest jobs and save to UpworkJobs.csv
@@ -204,8 +209,8 @@ def bid_project():
         for row in csv_reader:
             temp.append(row)
         
-    _make_bid_on_projects(temp)
-    
+    bid_status = _make_bid_on_projects(temp)
+    return bid_status
     # logger.info('projects - ', len(projects))
 
             
@@ -245,7 +250,8 @@ def _make_bid_on_projects(jobs_file_content):
             logger.info("Error occurred in bidding for fixed project")
             break
         driver.get_screenshot_as_file("screenshot_bid_project.png")
-
+    return True
+        
 def filter_by_AI_bid(project):
     # open workbook
     # wb = xlrd.open_workbook(r'.\UpworkBids.xlsx')
@@ -387,6 +393,17 @@ def check_exists_by_id(element_id):
 def check_exists_by_css(element_class):
     try:
         temp = driver.find_element(By.CSS_SELECTOR, element_class)
+    except NoSuchElementException:
+        return False
+    return True
+
+def log_out():
+    try:
+        avatarBtn = driver.find_element(By.CSS_SELECTOR, "button[data-cy='menu-trigger']")
+        avatarBtn.click()
+        time.sleep(5)
+        logoutBtn = driver.find_element(By.CSS_SELECTOR, "button[data-cy='logout-trigger']")
+        time.sleep(5)
     except NoSuchElementException:
         return False
     return True
