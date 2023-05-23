@@ -34,16 +34,20 @@ set_logger(logger)
 ## Set Chrome Driver Options ##
 
 chrome_options = Options()
-chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222") #Important for open chromebrowser
+# chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222") #Important for open chromebrowser
 # chrome_options.add_argument("--incognito")
 chrome_options.add_argument('--ignore-ssl-errors=yes')
 chrome_options.add_argument('--ignore-certificate-errors')
+chrome_options.add_argument('--allow-running-insecure-content')
+chrome_options.add_argument("--window-size=1920,1080")
 # chrome_options.add_argument('--user-data-dir=C:/Users/Acer/AppData/Local/Google/Chrome/User Data')
 # chrome_options.add_argument('--profile-directory=Profile 1'),
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 # chrome_options.add_argument("--headless") # This won't show the window
 chrome_options.page_load_strategy = 'normal'
+user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36'
+chrome_options.add_argument(f'user-agent={user_agent}')
 # chrome_options.binary_location = "/usr/bin/google-chrome-stable"
 
 driver = webdriver.Chrome(options=chrome_options)
