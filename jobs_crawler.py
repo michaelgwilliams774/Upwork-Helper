@@ -408,12 +408,15 @@ def check_exists_by_css(element_class):
 
 def log_out():
     try:
+        driver.get('https://www.upwork.com/nx/jobs/search/')
+        time.sleep(15)
         driver.get_screenshot_as_file('log_out.png')
         avatarBtn = driver.find_element(By.CSS_SELECTOR, "button[data-cy='menu-trigger']")
-        avatarBtn.click()
-        time.sleep(5)
+        driver.execute_script("arguments[0].click();", avatarBtn)
+        time.sleep(3)
         logoutBtn = driver.find_element(By.CSS_SELECTOR, "button[data-cy='logout-trigger']")
-        time.sleep(5)
+        driver.execute_script("arguments[0].click();", logoutBtn)
+        time.sleep(3)
     except NoSuchElementException:
         return False
     return True
