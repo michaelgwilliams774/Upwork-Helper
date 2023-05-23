@@ -91,11 +91,8 @@ def upwork_login():
         csv_reader = DictReader(fd)
         for row in csv_reader:
             if authenticate(row['Email'], row['Password'], row['Security_Answer']):
-                scraping = jobs_crawler()
-                if scraping:
-                    bid_status = bid_project()
-                    if bid_status:
-                        log_out()
+                print(f"login successfully - {row['Email']}")
+                jobs_crawler()
     return True
 
 # Scrape the latest jobs and save to UpworkJobs.csv
@@ -201,6 +198,7 @@ def jobs_crawler():
 #             break
     print("Successfully got the job list")
     logger.info("Successfully got the job list")
+    bid_project()
     return True
 
 # Bid for the project
@@ -254,6 +252,7 @@ def _make_bid_on_projects(jobs_file_content):
             logger.info("Error occurred in bidding for fixed project")
             break
         driver.get_screenshot_as_file("screenshot_bid_project.png")
+    log_out()
     return True
         
 def filter_by_AI_bid(project):
