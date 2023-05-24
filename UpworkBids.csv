@@ -1,5 +1,5 @@
 Tag;Bid_content;Success
-Shopify,marketplace,Elevated Web App;"Sounds like you need someone to help you quickly create Shopify page? I can help you out with that. If you're interested, let's book a call through this link https://links.elev8d.io/call?j=01cedf11718f7ee534 and we can discuss further.
+Shopify,marketplace,Elevated Web App;"Sounds like you need someone to help you quickly create Shopify or WordPress page? I can help you out with that. If you're interested, let's book a call through this link https://links.elev8d.io/call?j=01cedf11718f7ee534 and we can discuss further.
 
 ---
 
@@ -150,7 +150,7 @@ IOS: https://apps.apple.com/pk/app/fikifoo-local-food-delivery/id1442856469
 Thank you for considering my application. I look forward to the opportunity to discuss my qualifications with you further.
 
 Best regards,";0
-React,React Native,Google Play,Apple App store,NextJS;"Hi there,
+React,React Native,Google Play,Apple App store,NextJS,Next.js,React.js;"Hi there,
 
 I hope this message finds you well! I just wanted to reach out regarding your desire for a React/React-Native developer. I have years of experience in both React and React Native, and have built and deployed numerous mobile applications to both the Google Play and Apple App stores, along with multiple websites as well. Please see a few examples below:
 
@@ -181,7 +181,7 @@ I handled private/public page routings, redux store management, middleware compo
 
 Extremely responsible, dedicated and always motivated to learn. I am driven to master my craft, put passion into my work, and the ability to learn quickly. I look forward to extending these transferable skills into the software development space.
 Thanks!";0
-wordpress,ecommerce,WooCommerce,CPT,HTML,CSS,PHP,Elementor;"🥇 First Prize Winner for Software Development Services by Honorable Prime Minister of India [Mr. Narendra Modi] 2022 🥇
+WordPress,WP,ecommerce,WooCommerce,Elementor;"🥇 First Prize Winner for Software Development Services by Honorable Prime Minister of India [Mr. Narendra Modi] 2022 🥇
 
 🏆💎 **Upwork Recommended Full Stack WordPress Developer Here** 💎🏆
 
@@ -338,25 +338,19 @@ How about we jump on a 5 min quick chat to make sure I know the complete details
 
 Thanks
 ";0
-NFT,MetaVerse,Web3,ETH,ERC20,BNB,BEP20,TRX,TRC20,Blockchain,Sweeper Bots,Auto-Withdrawal,Frontrunner Bots,Ethers,Web3;"Hi there.
-I have gone through your requirement carefully and feel confident because I did several similar to the projects before.
-I am a full-stack web & blockchain developer having over 6 years of experience.
+React,framework,testing,javascript,website;"Hello there,
 
-* Blockchain developer Here, who specializes in cryptocurrency and blockchain-based Enterprise solutions.
-As a full-stack blockchain developer, I have successfully delivered a wide range of
-- Blockchain development (Ethereum & Solana & BSC) using the smart contracts with solidity & Truffle framework & Rust
-- NFT minting & NFT marketplace development
-- Token development (BEP20, ERC20, ERC223, ERC721, ERC1155)
-- DApps & DEX tools
+Seasoned Freelancer with 8+ years of experience in Full-Stack development is here to help you.
 
-* Full-stack developer Here.
-I am talented in React.js/Next.js/Node.js/C#/ASP.NET and GraphQL, Redux, Pure JavaScript(ECMAScript 5+)/TypeScript, HTML, CSS, JQuery, Bootstrap are the basic part of my front-end development and also well-versed in DB management using MongoDB, MySQL, PostgreSQL, etc and Cloud computing(AWS, Azure DevOps, Google Cloud, etc) experience.
+I may be new here on upwork.com, But I have a long history of working on web development with several frameworks.
+Experience with Testing the performance and features would be helpful for this project.
+I'd like to help people to solve problems with an efficient solution.
 
-I'm ready to start and willing to work for you on reasonable price and time.
-So please feel free to contact me so we can discuss more details.
-Thank you.
+I have gone through the requirements you have posted and will jump on the core understandings of this project and would like to ask a few things related to this project so I can understand the work scope better.
 
-Best Regards.";0
+How about we jump on a 5 min quick chat to make sure I know the complete details of this project so that I can quote better and accurately?
+
+Thanks";0
 python,Django,Vue,PostgreSQL;"Hi,
 
 With over 8 years of experience in Full-stack development and expertise in Python, Django, Vue.js, and PostgreSQL, I am confident in my ability to tackle the complexities of your project. My experience includes developing responsive and efficient web applications using Django, DRF, and Vue.js, as well as integrating with various APIs.
@@ -370,3 +364,16 @@ If you have any questions or would like to discuss this project further, please 
 Thank you for considering my proposal, and I look forward to the opportunity to work with you.
 
 Best regards,";0
+chatbot,chatgpt,open ai,python,gpt;"
+Hi, 
+After carefully reading your job description, I realized that this would be a great chance for me to share my previous valuable experience
+regarding making chatbot.
+I have fully experienced in making chatbot using GPT-3 and GPT-4.
+You can check the 'Welend' chatbot. I got the user's request and sent it to our server which was built on GPT-4 using python and 
+got the response back to the user, so they could talk with the AI bot efficiently.
+Also after taking care of models for manipulating WeLend related information, I publised our own server to invoke the GPT-4 engine into our server
+with the information of WeLend.
+As a senior developer, I am able to fully contribute to your project and I am willing to move further with the growth of your company.
+If you are interested, let's jump on a quick call to discuss more details.
+Hope to hear from you soon.
+Regards";0

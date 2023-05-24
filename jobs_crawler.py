@@ -142,7 +142,7 @@ def jobs_crawler():
 
     keyword='web'
     payment_verified = '&payment_verified=1'
-    location='&location=United States,Canada,Australia'
+    location='&location=United States,Canada,Australia,United Kingdom,Spain,Netherlands'
 
     # url = f"https://www.upwork.com/nx/jobs/search/?q={keyword}&sort=recency" # without Login
     url = f"https://www.upwork.com/nx/jobs/search/?q={keyword}&sort=recency{payment_verified}{location}&t=0,1&amount=1000-&hourly_rate=30-" # with login
@@ -299,16 +299,16 @@ def filter_by_AI_bid(project):
             tag = row['Tag']
             project_description = project['Description']
             # clean string
-            pat = re.compile(r'[^a-zA-Z ]+')
-            tag = re.sub(pat, ',', tag).lower()
-            project_description = re.sub(pat, '', project_description).lower()
             result = {}
             for x in tag.split(','):
                 result[x] = 0
-                for y in project_description.split():
-                    if x.strip() in y.strip():
+                for y in project_description.split(' '):
+                    if (x.lower().strip()) in (y.lower().strip()):
                         result[x] += 1
-            bids[-1]['Match_case'] = sum(result.values()) / len(result.values())
+                for z in project['Job Title']:
+                    if (x.lower().strip()) in (z.lower().strip()):
+                        result[x] += 1
+            bids[-1]['Match_case'] = sum(result.values())
         
         return (sorted(bids, key = lambda x: x['Match_case'], reverse = True))[0]['Bid_content'].replace('. ', '.\n')
 
@@ -316,12 +316,12 @@ def filter_by_AI_projects(projects):
     ### Temporary emulation of AI ###
     ### We will add real AI feature in this subroutine later ###
     # logger.info('projects type - ', type(projects))
-    filtered_by_budget = sorted(projects, key = lambda x: x['Budget'], reverse = True)[:5]
-    filtered_by_spent = sorted(projects, key = lambda x: x['Spent'], reverse = True)[:5]
+    filtered_by_budget = sorted(projects, key = lambda x: x['Budget'], reverse = True)
+    filtered_by_spent = sorted(projects, key = lambda x: x['Spent'], reverse = True)
     for item in filtered_by_spent:
         if item not in filtered_by_budget:
             filtered_by_budget.append(item)
-    return filtered_by_budget[:5]
+    return filtered_by_budget
 
 def _bid_for_project(project):
     ### Make bid for fixed project ###
