@@ -305,7 +305,7 @@ def filter_by_AI_bid(project):
                 for y in project_description.split(' '):
                     if (x.lower().strip()) in (y.lower().strip()):
                         result[x] += 1
-                for z in project['Job Title']:
+                for z in project['Job Title'].split(' '):
                     if (x.lower().strip()) in (z.lower().strip()):
                         result[x] += 1
             bids[-1]['Match_case'] = sum(result.values())
